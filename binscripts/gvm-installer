@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+
+display_error() {
+	tput sgr0
+	tput setaf 1
+	echo "ERROR: $1"
+	tput sgr0
+	exit 1
+}
+
+update_profile() {
+	[ -f "$1" ] || return 1
+
+	grep -F "$source_line" "$1" > /dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		echo -e "\n$source_line" >> "$1"
+	fi
+}
+
+check_existing_go() {
+
+	if [ "$GOROOT" = "" ]; then
+		if which go > /dev/null; then
+			GOROOT=$(go env | grep GOROOT | cut -d"=" -f2)
+		else
+			echo "No existing Go versions detected"
+			return
+		fi
+	fi
+	echo "Created profile for existing install of Go at $GOROOT"
+	mkdir -p "$GVM_DEST/$GVM_NAME/environments" &> /dev/null || display_error "Failed to create environment directory"
+	mkdir -p "$GVM_DEST/$GVM_NAME/pkgsets/system/global" &> /dev/null || display_error "Failed to create new package set"
+	mkdir -p "$GVM_DEST/$GVM_NAME/gos/system" &> /dev/null || display_error "Failed to create new Go folder"
+	cat << EOF > $GVM_DEST/$GVM_NAME/environments/system
+# Automatically generated file. DO NOT EDIT!
+export GVM_ROOT; GVM_ROOT="$GVM_DEST/$GVM_NAME"
+export gvm_go_name; gvm_go_name="system"
+export gvm_pkgset_name; gvm_pkgset_name="global"
+export GOROOT; GOROOT="$GOROOT"
+export GOPATH; GOPATH="$GVM_DEST/$GVM_NAME/pkgsets/system/global"
+export PATH; PATH="$GVM_DEST/$GVM_NAME/pkgsets/system/global/bin:$GOROOT/bin:$GVM_ROOT/bin:\$PATH"
+EOF
+}
+
+BRANCH=${1:-master}
+GVM_DEST=${2:-$HOME}
+GVM_NAME="gvm"
+SRC_REPO=${SRC_REPO:-https://github.com/keonjeo/kgvm.git}
+echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+echo "=============== GVM_NAME: $GVM_NAME ============"
+echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+
+
+[ "$GVM_DEST" = "$HOME" ] && GVM_NAME=".gvm"
+
+echo "=============== BRANCH: $BRANCH ============"
+echo "=============== GVM_DEST: $GVM_DEST ============"
+echo "=============== GVM_NAME: $GVM_NAME ============"
+echo "=============== SRC_REPO: $SRC_REPO ============"
+
+[ -d "$GVM_DEST/$GVM_NAME" ] && display_error \
+    "Already installed! Remove old installation by running
+
+    rm -rf $GVM_DEST/$GVM_NAME"
+
+[ -d "$GVM_DEST" ] || mkdir -p "$GVM_DEST" > /dev/null 2>&1 || display_error "Failed to create $GVM_DEST"
+[ -z "$(which git)" ] && display_error "Could not find git
+
+  debian/ubuntu: apt-get install git
+  redhat/centos: yum install git
+  archlinux: pacman -S git
+  mac:   brew install git
+"
+
+# Is gvm-installer being called from the origin repo?
+# If so, skip the clone and source locally!
+# This prevents CI from breaking on non-merge commits.
+
+GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+echo "=============== GIT_ROOT: $GIT_ROOT  ==============="
+
+if [[ -z "$GIT_ROOT" || "$(basename "$GIT_ROOT")" != "gvm" ]]; then
+    echo "Cloning from $SRC_REPO to $GVM_DEST/$GVM_NAME"
+    # git clone --quiet "$SRC_REPO" "$GVM_DEST/$GVM_NAME" 2> /dev/null ||
+    git clone "$SRC_REPO" "$GVM_DEST/$GVM_NAME" 2> /dev/null ||
+        display_error "Failed to clone from $SRC_REPO into $GVM_DEST/$GVM_NAME"
+else
+	# 如果用户在gvm这个项目里面里面，则只需要将其拷贝到~/.gvm
+    echo "---------------------"
+	if [[ $GVM_DEST == *"$GIT_ROOT"* ]]; then
+		# 如果 GVM_DEST设置在gvm项目里面的话， GVM_DEST会包含GIT_ROOT ( 因为 $(base_name $GIT_ROOT) 会等于gvm)
+		echo "++++++++++++++   ln -s $GIT_ROOT $GVM_DEST    ++++++++++++++"
+		ln -s "$GIT_ROOT" "$GVM_DEST"
+	else
+		echo "==============   cp -r "$GIT_ROOT" "$GVM_DEST/$GVM_NAME"   ================"
+		cp -r "$GIT_ROOT" "$GVM_DEST/$GVM_NAME"
+	fi
+	echo "---------------------"
+fi
+
+pwd
+echo "================="
+pushd . > /dev/null
+cd "$GVM_DEST/$GVM_NAME" && git checkout --quiet "$BRANCH" 2> /dev/null
+popd > /dev/null
+echo "================="
+pwd
+
+
+[ -z "$GVM_NO_GIT_BAK" ] && mv "$GVM_DEST/$GVM_NAME/.git" "$GVM_DEST/$GVM_NAME/git.bak"
