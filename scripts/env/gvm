@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+. "$GVM_ROOT/scripts/function" || return 1
+
+function gvm() {
+    echo ====
+}
