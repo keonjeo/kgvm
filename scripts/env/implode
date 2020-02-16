@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+function gvm_implode() {
+    echo "==== scripts/env/implode script ===="
+}

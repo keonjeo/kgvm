@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+function gvm_use() {
+    echo "==== scripts/env/use script ===="
+}
