@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
+echo "============== Add the functions from scripts/function directory ==============="
 . "$GVM_ROOT/scripts/function" || return 1
+echo "================================================================================"
 
 function gvm() {
     echo ====
 }
+
+echo "=============== scripts/env/gvm =============="
