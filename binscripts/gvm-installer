@@ -11,7 +11,11 @@ display_error() {
 update_profile() {
 	[ -f "$1" ] || return 1
 
+	echo "======================================"
+	echo "grep -F '$source_line' $1"
+	echo "======================================"
 	grep -F "$source_line" "$1" > /dev/null 2>&1
+
 	if [ $? -ne 0 ]; then
 		echo -e "\n$source_line" >> "$1"
 	fi
@@ -108,3 +112,45 @@ pwd
 
 
 [ -z "$GVM_NO_GIT_BAK" ] && mv "$GVM_DEST/$GVM_NAME/.git" "$GVM_DEST/$GVM_NAME/git.bak"
+
+
+source_line="[[ -s \"${GVM_DEST}/$GVM_NAME/scripts/gvm\" ]] && source \"${GVM_DEST}/$GVM_NAME/scripts/gvm\""
+source_file="${GVM_DEST}/$GVM_NAME/scripts/gvm"
+
+echo "source_line => $source_line"
+echo "source_file => $source_file"
+# source_line => [[ -s "/home/keon/.gvm/scripts/gvm" ]] && source "/home/keon/.gvm/scripts/gvm"
+# source_file => /home/keon/.gvm/scripts/gvm
+
+echo "ZSH_NAME: $ZSH_NAME"
+if [ -n "$ZSH_NAME" ]; then
+	echo "----------------- zsh_name ------------------"
+else
+	echo "+++++++++++++++++ zsh_name ++++++++++++++++++"
+fi
+
+
+
+if [ -z "$GVM_NO_UPDATE_PROFILE" ] ; then
+  echo "==============  0000"
+  if [ -n "$ZSH_NAME" ]; then
+	echo "======== 111"
+    update_profile "$HOME/.zshrc"
+  elif [ "$(uname)" == "Linux" ]; then
+  	echo "======== 222"
+    update_profile "$HOME/.bashrc" || update_profile "$HOME/.bash_profile"
+  elif [ "$(uname)" == "Darwin" ]; then
+  	echo "======== 333"
+    update_profile "$HOME/.profile" || update_profile "$HOME/.bash_profile"
+  fi
+fi
+
+echo "export GVM_ROOT=$GVM_DEST/$GVM_NAME" > "$GVM_DEST/$GVM_NAME/scripts/gvm"
+echo ". \$GVM_ROOT/scripts/gvm-default" >> "$GVM_DEST/$GVM_NAME/scripts/gvm"
+check_existing_go
+[[ -s "$GVM_DEST/$GVM_NAME/scripts/gvm" ]] && source "$GVM_DEST/$GVM_NAME/scripts/gvm"
+echo "Installed GVM v${GVM_VERSION}"
+echo
+echo "Please restart your terminal session or to get started right away run"
+echo " \`source ${source_file}\`"
+echo
