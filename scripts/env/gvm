@@ -34,11 +34,11 @@ function gvm() {
         pwd
         gvm use "$@"
     elif [[ "$1" == "implode" ]]; then
-        echo "==== implode, \$\@ => $@ ===="
+        echo "====  implode, \$@ => $@  ===="
         . "$GVM_ROOT/scripts/env/implode"
         gvm_implode
     elif [[ "$1" == "pkgset" ]]; then
-        echo "==== pkgset, \$\@ => $@ ===="
+        echo "====  pkgset, \$@ => $@  ===="
         . "$GVM_ROOT/scripts/env/pkgset-use"
         pwd
         shift
@@ -47,7 +47,7 @@ function gvm() {
         pwd
         gvm_pkgset_use "$@"
     else
-        echo "==== NOT use, implode and pkgset, \$\@ => $@===="
+        echo "====  NOT use, implode and pkgset, \$@ => $@ ===="
         "$GVM_ROOT/bin/gvm" "$@"
     fi
 }
