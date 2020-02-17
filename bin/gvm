@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+
+echo "GVM_DEBUG: $GVM_DEBUG"
+[ -n "$GVM_DEBUG" ] && {
+#   set -x
+    echo "==================="
+}
+
+GVM_DEBUG="xxx"
+echo "GVM_DEBUG: $GVM_DEBUG"
+[ -n "$GVM_DEBUG" ] && {
+#   set -x
+    echo "+++++++++++++++++++"
+}
