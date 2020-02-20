@@ -32,7 +32,7 @@ function gvm() {
         pwd
         shift
         pwd
-        gvm use "$@"
+        gvm_use "$@"
     elif [[ "$1" == "implode" ]]; then
         echo "====  implode, \$@ => $@  ===="
         . "$GVM_ROOT/scripts/env/implode"
